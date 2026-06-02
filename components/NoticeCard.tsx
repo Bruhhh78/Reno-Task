@@ -1,89 +1,122 @@
-import { Notice, Priority, Category } from ".prisma/client";
+import { Notice } from ".prisma/client";
 import Link from "next/link";
 
 interface NoticeCardProps {
   notice: Notice;
   onDelete: (id: number) => void;
+  index?: number;
 }
 
-const categoryColors: Record<Category, string> = {
-  Exam: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
-  Event: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
-  General: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
+const categoryMap = {
+  Exam:    { label: "Exam",    className: "badge badge-exam",    icon: "📝" },
+  Event:   { label: "Event",   className: "badge badge-event",   icon: "🎉" },
+  General: { label: "General", className: "badge badge-general", icon: "📢" },
 };
 
-export default function NoticeCard({ notice, onDelete }: NoticeCardProps) {
-  const isUrgent = notice.priority === Priority.Urgent;
-  const formattedDate = new Date(notice.publishDate).toLocaleDateString(
-    "en-IN",
-    { day: "numeric", month: "short", year: "numeric" }
-  );
+export default function NoticeCard({ notice, onDelete, index = 0 }: NoticeCardProps) {
+  const isUrgent = notice.priority === "Urgent";
+  const cat = categoryMap[notice.category as keyof typeof categoryMap];
+  const formattedDate = new Date(notice.publishDate).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 
   return (
-    <div
-      className={`relative flex flex-col gap-3 rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl
-        ${
-          isUrgent
-            ? "bg-gradient-to-br from-red-950/60 to-gray-900 border border-red-500/40 shadow-red-900/30 shadow-lg"
-            : "bg-gradient-to-br from-gray-800/80 to-gray-900 border border-gray-700/50 shadow-gray-900/20 shadow-md"
-        }`}
+    <article
+      className={`notice-card card-enter ${isUrgent ? "urgent" : ""}`}
+      style={{ animationDelay: `${index * 50}ms` }}
     >
-      {/* Urgent badge */}
-      {isUrgent && (
-        <span className="absolute top-4 right-4 inline-flex items-center gap-1 rounded-full bg-red-500 px-3 py-0.5 text-xs font-bold text-white shadow-lg shadow-red-500/30 animate-pulse">
-          <span className="h-1.5 w-1.5 rounded-full bg-white inline-block" />
-          URGENT
-        </span>
-      )}
-
-      {/* Image */}
+      {/* Card image */}
       {notice.image && (
-        <div className="overflow-hidden rounded-xl">
+        <div style={{ overflow: "hidden", borderRadius: "14px 14px 0 0", margin: "0 0 0 0" }}>
           <img
             src={notice.image}
             alt={notice.title}
-            className="w-full h-40 object-cover transition-transform duration-300 hover:scale-105"
+            style={{
+              width: "100%",
+              height: "160px",
+              objectFit: "cover",
+              display: "block",
+              transition: "transform 0.4s ease",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
+            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
           />
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-wrap items-start gap-2 pr-16">
-        <span
-          className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${categoryColors[notice.category]}`}
+      <div style={{ padding: "18px" }}>
+        {/* Top row: badges */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+          <span className={cat.className}>
+            {cat.icon} {cat.label}
+          </span>
+          {isUrgent && (
+            <span className="badge badge-urgent">
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", display: "inline-block" }} />
+              URGENT
+            </span>
+          )}
+          <span className="badge badge-date" style={{ marginLeft: "auto" }}>
+            📅 {formattedDate}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h2
+          className="line-clamp-2"
+          style={{
+            fontSize: "15px",
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            lineHeight: 1.45,
+            marginBottom: "8px",
+          }}
         >
-          {notice.category}
-        </span>
-        <span className="rounded-full bg-gray-700/60 px-2.5 py-0.5 text-xs text-gray-400 border border-gray-600/30">
-          📅 {formattedDate}
-        </span>
+          {notice.title}
+        </h2>
+
+        {/* Body */}
+        <p
+          className="line-clamp-3"
+          style={{
+            fontSize: "13px",
+            color: "var(--text-secondary)",
+            lineHeight: 1.65,
+            marginBottom: "16px",
+          }}
+        >
+          {notice.body}
+        </p>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: "var(--border-subtle)", marginBottom: "14px" }} />
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Link href={`/edit/${notice.id}`} className="btn-edit" style={{ flex: 1, justifyContent: "center" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit
+          </Link>
+          <button
+            onClick={() => onDelete(notice.id)}
+            className="btn-delete"
+            style={{ flex: 1, justifyContent: "center" }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+            Delete
+          </button>
+        </div>
       </div>
-
-      {/* Title */}
-      <h2 className="text-lg font-bold text-white leading-snug">
-        {notice.title}
-      </h2>
-
-      {/* Body */}
-      <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">
-        {notice.body}
-      </p>
-
-      {/* Actions */}
-      <div className="flex gap-2 mt-auto pt-3 border-t border-gray-700/40">
-        <Link
-          href={`/edit/${notice.id}`}
-          className="flex-1 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 px-3 py-2 text-center text-sm font-medium text-indigo-300 transition-all duration-200 hover:text-indigo-100"
-        >
-          ✏️ Edit
-        </Link>
-        <button
-          onClick={() => onDelete(notice.id)}
-          className="flex-1 rounded-xl bg-red-600/10 hover:bg-red-600/30 border border-red-500/20 px-3 py-2 text-sm font-medium text-red-400 transition-all duration-200 hover:text-red-300"
-        >
-          🗑️ Delete
-        </button>
-      </div>
-    </div>
+    </article>
   );
 }

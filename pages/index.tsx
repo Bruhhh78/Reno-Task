@@ -6,6 +6,7 @@ import { Notice } from ".prisma/client";
 import { prisma } from "@/lib/prisma";
 import NoticeCard from "@/components/NoticeCard";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface HomeProps {
   initialNotices: Notice[];
@@ -24,9 +25,7 @@ export default function Home({ initialNotices }: HomeProps) {
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/notices/${deleteId}`, { method: "DELETE" });
-      if (res.ok) {
-        setNotices((prev) => prev.filter((n) => n.id !== deleteId));
-      }
+      if (res.ok) setNotices((prev) => prev.filter((n) => n.id !== deleteId));
     } catch (err) {
       console.error(err);
     } finally {
@@ -35,94 +34,168 @@ export default function Home({ initialNotices }: HomeProps) {
     }
   };
 
-  const urgentCount = notices.filter((n) => n.priority === "Urgent").length;
+  const urgentNotices = notices.filter((n) => n.priority === "Urgent");
+  const normalNotices = notices.filter((n) => n.priority === "Normal");
 
   return (
     <>
       <Head>
         <title>Notice Board – Reno Platforms</title>
-        <meta
-          name="description"
-          content="Official notice board for Reno Platforms. View, create, edit and delete institutional notices."
-        />
+        <meta name="description" content="Official notice board for Reno Platforms. View, create, edit and delete institutional notices." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="min-h-screen bg-gray-950 text-white">
-        {/* Header */}
-        <header className="sticky top-0 z-30 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
-                <span className="text-lg">📋</span>
+      <div style={{ minHeight: "100vh", background: "var(--bg-base)" }}>
+
+        {/* ===== HEADER ===== */}
+        <header className="site-header">
+          <div style={{
+            maxWidth: 1400,
+            margin: "0 auto",
+            padding: "0 24px",
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+          }}>
+            {/* Logo */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: "linear-gradient(135deg, var(--accent), #8b5cf6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 12px var(--accent-glow)",
+                flexShrink: 0,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white leading-none">
-                  Notice Board
-                </h1>
-                <p className="text-xs text-gray-500 mt-0.5">Reno Platforms</p>
+                <span style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+                  Notice<span style={{ color: "var(--accent)" }}>Board</span>
+                </span>
+                <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 500, marginTop: -2 }}>
+                  Reno Platforms
+                </div>
               </div>
             </div>
-            <Link
-              href="/add"
-              id="add-notice-btn"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-violet-500 transition-all"
-            >
-              <span className="text-base leading-none">+</span>
-              <span>New Notice</span>
+
+            <div style={{ flex: 1 }} />
+
+            {/* Stats chips (desktop) */}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {urgentNotices.length > 0 && (
+                <span className="stat-chip" style={{ display: "flex" }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444", animation: "pulse-urgent 2s ease-in-out infinite" }} />
+                  <strong style={{ color: "#ef4444" }}>{urgentNotices.length}</strong>
+                  <span style={{ display: "none" }}>Urgent</span>
+                </span>
+              )}
+            </div>
+
+            {/* Actions */}
+            <ThemeToggle />
+            <Link href="/add" id="add-notice-btn" className="btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Post Notice
             </Link>
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          {/* Stats bar */}
-          <div className="mb-6 flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2 rounded-xl bg-gray-800/50 border border-gray-700/40 px-4 py-2">
-              <span className="text-sm text-gray-400">Total</span>
-              <span className="font-bold text-white">{notices.length}</span>
+        {/* ===== MAIN ===== */}
+        <main style={{ maxWidth: 1400, margin: "0 auto", padding: "32px 24px 64px" }}>
+
+          {/* Page title + stats */}
+          <div className="animate-fade-up" style={{ marginBottom: 32 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", marginBottom: 6, letterSpacing: "-0.03em" }}>
+              All Notices
+            </h1>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+              <span className="stat-chip">
+                Total <strong>{notices.length}</strong>
+              </span>
+              <span className="stat-chip">
+                Urgent <strong style={{ color: urgentNotices.length > 0 ? "#ef4444" : "var(--text-primary)" }}>{urgentNotices.length}</strong>
+              </span>
+              <span className="stat-chip">
+                Normal <strong>{normalNotices.length}</strong>
+              </span>
             </div>
-            {urgentCount > 0 && (
-              <div className="flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-2">
-                <span className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
-                <span className="text-sm text-red-400 font-medium">
-                  {urgentCount} Urgent
-                </span>
-              </div>
-            )}
           </div>
 
-          {notices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="mb-4 text-5xl">📭</div>
-              <h2 className="text-xl font-semibold text-gray-300">
+          {/* Empty state */}
+          {notices.length === 0 && (
+            <div className="animate-fade-up" style={{ textAlign: "center", paddingTop: 80, paddingBottom: 80 }}>
+              <div className="empty-illustration">📭</div>
+              <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
                 No notices yet
               </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                Create your first notice to get started.
+              <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 28 }}>
+                Post your first notice and it will appear here.
               </p>
-              <Link
-                href="/add"
-                className="mt-6 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-all"
-              >
-                Add Notice
+              <Link href="/add" className="btn-primary" style={{ display: "inline-flex" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Post First Notice
               </Link>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {notices.map((notice) => (
-                <NoticeCard
-                  key={notice.id}
-                  notice={notice}
-                  onDelete={handleDeleteRequest}
-                />
-              ))}
-            </div>
+          )}
+
+          {/* Urgent section */}
+          {urgentNotices.length > 0 && (
+            <section>
+              <div className="urgent-divider">
+                <span style={{ color: "#ef4444", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444", display: "inline-block", animation: "pulse-urgent 2s ease-in-out infinite" }} />
+                  Urgent Notices
+                </span>
+              </div>
+              <div className="card-grid">
+                {urgentNotices.map((notice, i) => (
+                  <NoticeCard key={notice.id} notice={notice} onDelete={handleDeleteRequest} index={i} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Normal section */}
+          {normalNotices.length > 0 && (
+            <section style={{ marginTop: urgentNotices.length > 0 ? 0 : 0 }}>
+              {urgentNotices.length > 0 && (
+                <div className="urgent-divider" style={{ color: "var(--text-muted)" }}>
+                  General Notices
+                </div>
+              )}
+              <div className="card-grid">
+                {normalNotices.map((notice, i) => (
+                  <NoticeCard key={notice.id} notice={notice} onDelete={handleDeleteRequest} index={urgentNotices.length + i} />
+                ))}
+              </div>
+            </section>
           )}
         </main>
 
-        {/* Footer */}
-        <footer className="mt-16 border-t border-gray-800/40 py-6 text-center text-xs text-gray-600">
+        {/* ===== FOOTER ===== */}
+        <footer style={{
+          borderTop: "1px solid var(--border-subtle)",
+          padding: "20px 24px",
+          textAlign: "center",
+          fontSize: 12,
+          color: "var(--text-muted)",
+        }}>
           © {new Date().getFullYear()} Reno Platforms · Notice Board
         </footer>
       </div>
@@ -141,10 +214,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
   const notices = await prisma.notice.findMany({
     orderBy: [{ priority: "desc" }, { publishDate: "desc" }],
   });
-
   return {
     props: {
-      // Dates must be serialized as strings for Next.js SSR
       initialNotices: notices.map((n) => ({
         ...n,
         publishDate: n.publishDate.toISOString(),

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Notice } from ".prisma/client";
 import { prisma } from "@/lib/prisma";
 import NoticeForm, { NoticeFormData } from "@/components/NoticeForm";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface EditNoticePageProps {
   notice: Notice & { publishDate: string; createdAt: string; updatedAt: string };
@@ -15,7 +16,7 @@ export default function EditNoticePage({ notice }: EditNoticePageProps) {
     body: notice.body,
     category: notice.category as NoticeFormData["category"],
     priority: notice.priority as NoticeFormData["priority"],
-    publishDate: notice.publishDate.split("T")[0], // format as YYYY-MM-DD
+    publishDate: notice.publishDate.split("T")[0],
     image: notice.image ?? "",
   };
 
@@ -26,27 +27,99 @@ export default function EditNoticePage({ notice }: EditNoticePageProps) {
         <meta name="description" content="Edit an existing notice on the Reno Platforms notice board." />
       </Head>
 
-      <div className="min-h-screen bg-gray-950 text-white">
+      <div style={{ minHeight: "100vh", background: "var(--bg-base)" }}>
+
         {/* Header */}
-        <header className="sticky top-0 z-30 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-4 sm:px-6">
+        <header className="site-header">
+          <div style={{
+            maxWidth: 1400,
+            margin: "0 auto",
+            padding: "0 24px",
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}>
             <Link
               href="/"
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-all"
+              style={{
+                width: 36,
+                height: 36,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 10,
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-default)",
+                color: "var(--text-secondary)",
+                textDecoration: "none",
+                transition: "all 0.2s ease",
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+              }}
             >
-              ←
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+              </svg>
             </Link>
+
             <div>
-              <h1 className="text-base font-bold text-white leading-none">
+              <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
                 Edit Notice
-              </h1>
-              <p className="text-xs text-gray-500 mt-0.5">Notice Board · Reno Platforms</p>
+              </span>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 500 }}>
+                Notice Board · Reno Platforms
+              </div>
             </div>
+
+            <div style={{ flex: 1 }} />
+            <ThemeToggle />
           </div>
         </header>
 
-        <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-          <div className="rounded-2xl bg-gray-900/60 border border-gray-700/50 p-6 shadow-xl backdrop-blur-sm">
+        {/* Main */}
+        <main style={{ maxWidth: 680, margin: "0 auto", padding: "40px 24px 80px" }}>
+          {/* Page header */}
+          <div className="animate-fade-up" style={{ marginBottom: 28 }}>
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 14px",
+              borderRadius: 10,
+              background: "var(--accent-subtle)",
+              border: "1px solid var(--border-default)",
+              marginBottom: 16,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>Editing</span>
+            </div>
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", marginBottom: 6, letterSpacing: "-0.02em" }}>
+              Update Notice
+            </h1>
+            <p
+              className="line-clamp-2"
+              style={{ fontSize: 14, color: "var(--text-secondary)" }}
+            >
+              {notice.title}
+            </p>
+          </div>
+
+          {/* Form card */}
+          <div
+            className="animate-fade-up glass-card"
+            style={{ padding: "28px", animationDelay: "80ms" }}
+          >
             <NoticeForm defaultValues={defaultValues} noticeId={notice.id} />
           </div>
         </main>
@@ -58,10 +131,8 @@ export default function EditNoticePage({ notice }: EditNoticePageProps) {
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const id = parseInt(params?.id as string, 10);
   if (isNaN(id)) return { notFound: true };
-
   const notice = await prisma.notice.findUnique({ where: { id } });
   if (!notice) return { notFound: true };
-
   return {
     props: {
       notice: {

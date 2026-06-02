@@ -1,5 +1,4 @@
 import { useForm } from "react-hook-form";
-import { Notice } from ".prisma/client";
 import { useRouter } from "next/router";
 import { useState } from "react";
 
@@ -26,22 +25,24 @@ export default function NoticeForm({ defaultValues, noticeId }: NoticeFormProps)
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<NoticeFormData>({ defaultValues });
+
+  const selectedPriority = watch("priority");
 
   const onSubmit = async (data: NoticeFormData) => {
     setIsSubmitting(true);
     setError(null);
     try {
-      const url = isEditing ? `/api/notices/${noticeId}` : "/api/notices";
-      const method = isEditing ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
+      const res = await fetch(
+        isEditing ? `/api/notices/${noticeId}` : "/api/notices",
+        {
+          method: isEditing ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
+      );
       const json = await res.json();
       if (!res.ok) {
         setError(json.error || "Something went wrong");
@@ -56,127 +57,204 @@ export default function NoticeForm({ defaultValues, noticeId }: NoticeFormProps)
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Error banner */}
       {error && (
-        <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-400">
-          ⚠️ {error}
+        <div style={{
+          padding: "12px 16px",
+          borderRadius: "12px",
+          background: "rgba(239,68,68,0.08)",
+          border: "1px solid rgba(239,68,68,0.25)",
+          color: "#ef4444",
+          fontSize: "13px",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {error}
         </div>
       )}
 
       {/* Title */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-semibold text-gray-300">
-          Title <span className="text-red-400">*</span>
+      <div className="form-group">
+        <label className="form-label">
+          Title <span style={{ color: "#ef4444" }}>*</span>
         </label>
         <input
           {...register("title", { required: "Title is required" })}
-          placeholder="Notice title"
-          className="rounded-xl bg-gray-800 border border-gray-600/50 px-4 py-2.5 text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+          placeholder="e.g. Final Exam Schedule Announced"
+          className="form-input"
         />
-        {errors.title && (
-          <p className="text-xs text-red-400">{errors.title.message}</p>
-        )}
+        {errors.title && <p className="form-error">⚠ {errors.title.message}</p>}
       </div>
 
       {/* Body */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-semibold text-gray-300">
-          Body <span className="text-red-400">*</span>
+      <div className="form-group">
+        <label className="form-label">
+          Description <span style={{ color: "#ef4444" }}>*</span>
         </label>
         <textarea
           {...register("body", { required: "Body is required" })}
-          placeholder="Notice details..."
-          rows={5}
-          className="rounded-xl bg-gray-800 border border-gray-600/50 px-4 py-2.5 text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
+          placeholder="Write the full notice details here..."
+          className="form-textarea"
         />
-        {errors.body && (
-          <p className="text-xs text-red-400">{errors.body.message}</p>
-        )}
+        {errors.body && <p className="form-error">⚠ {errors.body.message}</p>}
       </div>
 
-      {/* Category + Priority row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-gray-300">
-            Category <span className="text-red-400">*</span>
+      {/* Category + Priority */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div className="form-group">
+          <label className="form-label">
+            Category <span style={{ color: "#ef4444" }}>*</span>
           </label>
-          <select
-            {...register("category", { required: "Category is required" })}
-            className="rounded-xl bg-gray-800 border border-gray-600/50 px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
-          >
-            <option value="">Select category</option>
-            <option value="Exam">Exam</option>
-            <option value="Event">Event</option>
-            <option value="General">General</option>
-          </select>
-          {errors.category && (
-            <p className="text-xs text-red-400">{errors.category.message}</p>
-          )}
+          <div style={{ position: "relative" }}>
+            <select
+              {...register("category", { required: "Category is required" })}
+              className="form-select"
+              style={{ paddingRight: "40px" }}
+            >
+              <option value="">Select…</option>
+              <option value="Exam">📝 Exam</option>
+              <option value="Event">🎉 Event</option>
+              <option value="General">📢 General</option>
+            </select>
+            <svg
+              style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--text-muted)" }}
+              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+            >
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+          {errors.category && <p className="form-error">⚠ {errors.category.message}</p>}
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-gray-300">
-            Priority <span className="text-red-400">*</span>
+        <div className="form-group">
+          <label className="form-label">
+            Priority <span style={{ color: "#ef4444" }}>*</span>
           </label>
-          <select
-            {...register("priority", { required: "Priority is required" })}
-            className="rounded-xl bg-gray-800 border border-gray-600/50 px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
-          >
-            <option value="">Select priority</option>
-            <option value="Normal">Normal</option>
-            <option value="Urgent">Urgent</option>
-          </select>
-          {errors.priority && (
-            <p className="text-xs text-red-400">{errors.priority.message}</p>
-          )}
+          <div style={{ display: "flex", gap: "10px", paddingTop: "4px" }}>
+            {["Normal", "Urgent"].map((p) => {
+              const isSelected = selectedPriority === p;
+              const isUrgent = p === "Urgent";
+              return (
+                <label
+                  key={p}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "10px",
+                    borderRadius: "12px",
+                    border: `1.5px solid ${isSelected ? (isUrgent ? "#ef4444" : "var(--accent)") : "var(--border-default)"}`,
+                    background: isSelected ? (isUrgent ? "rgba(239,68,68,0.1)" : "var(--accent-subtle)") : "var(--bg-elevated)",
+                    color: isSelected ? (isUrgent ? "#ef4444" : "var(--accent)") : "var(--text-secondary)",
+                    fontWeight: isSelected ? 600 : 400,
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    value={p}
+                    {...register("priority", { required: "Priority is required" })}
+                    style={{ display: "none" }}
+                  />
+                  {isUrgent ? "🔴" : "🟢"} {p}
+                </label>
+              );
+            })}
+          </div>
+          {errors.priority && <p className="form-error">⚠ {errors.priority.message}</p>}
         </div>
       </div>
 
       {/* Publish Date */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-semibold text-gray-300">
-          Publish Date <span className="text-red-400">*</span>
+      <div className="form-group">
+        <label className="form-label">
+          Publish Date <span style={{ color: "#ef4444" }}>*</span>
         </label>
         <input
           type="date"
           {...register("publishDate", { required: "Publish date is required" })}
-          className="rounded-xl bg-gray-800 border border-gray-600/50 px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+          className="form-input"
         />
-        {errors.publishDate && (
-          <p className="text-xs text-red-400">{errors.publishDate.message}</p>
-        )}
+        {errors.publishDate && <p className="form-error">⚠ {errors.publishDate.message}</p>}
       </div>
 
-      {/* Image URL (optional) */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-semibold text-gray-300">
+      {/* Image URL */}
+      <div className="form-group">
+        <label className="form-label">
           Image URL{" "}
-          <span className="text-gray-500 font-normal text-xs">(optional)</span>
+          <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 11 }}>
+            — optional
+          </span>
         </label>
-        <input
-          {...register("image")}
-          placeholder="https://example.com/image.jpg"
-          className="rounded-xl bg-gray-800 border border-gray-600/50 px-4 py-2.5 text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-        />
+        <div style={{ position: "relative" }}>
+          <span style={{
+            position: "absolute",
+            left: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "var(--text-muted)",
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </span>
+          <input
+            {...register("image")}
+            placeholder="https://example.com/image.jpg"
+            className="form-input"
+            style={{ paddingLeft: "38px" }}
+          />
+        </div>
       </div>
 
       {/* Buttons */}
-      <div className="flex gap-3 pt-2">
+      <div style={{ display: "flex", gap: "12px", paddingTop: "4px" }}>
         <button
           type="button"
           onClick={() => router.push("/")}
-          className="flex-1 rounded-xl border border-gray-600 bg-gray-800 py-2.5 text-sm font-medium text-gray-300 hover:bg-gray-700 transition-all"
+          className="btn-secondary"
+          style={{ flex: 1, justifyContent: "center" }}
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-60 transition-all"
+          className="btn-primary"
+          style={{ flex: 2, justifyContent: "center" }}
         >
-          {isSubmitting ? "Saving…" : isEditing ? "Update Notice" : "Create Notice"}
+          {isSubmitting ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: "spin 1s linear infinite" }}>
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              </svg>
+              Saving…
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {isEditing
+                  ? <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>
+                  : <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>
+                }
+              </svg>
+              {isEditing ? "Update Notice" : "Post Notice"}
+            </>
+          )}
         </button>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </form>
   );
 }
