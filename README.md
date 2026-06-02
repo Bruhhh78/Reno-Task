@@ -1,5 +1,8 @@
 # Notice Board — Reno Platforms Internship Assignment
 
+**Live Demo:** [https://reno-notice-task.vercel.app/](https://reno-notice-task.vercel.app/)  
+**GitHub Repository:** [https://github.com/Bruhhh78/Reno-Task](https://github.com/Bruhhh78/Reno-Task)
+
 A full-stack Notice Board web application built with **Next.js (Pages Router)**, **Prisma ORM**, and **Supabase (PostgreSQL)**, deployed on **Vercel**.
 
 ---
