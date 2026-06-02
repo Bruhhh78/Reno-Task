@@ -1,7 +1,7 @@
 import { GetServerSideProps } from "next";
 import Link from "next/link";
 import { useState } from "react";
-import { Notice } from ".prisma/client";
+import { Notice } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import NoticeCard from "@/components/NoticeCard";
 

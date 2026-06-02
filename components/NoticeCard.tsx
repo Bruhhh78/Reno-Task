@@ -1,4 +1,4 @@
-import { Notice } from ".prisma/client";
+import { Notice } from "@prisma/client";
 import Link from "next/link";
 
 interface NoticeCardProps {
@@ -40,7 +40,7 @@ export default function NoticeCard({ notice, onDelete }: NoticeCardProps) {
             🔴 Urgent
           </span>
         )}
-        <span style={{ marginLeft: "auto", fontSize: "13px", color: "var(--text-secondary)", fontWeight: 500, alignSelf: "center" }}>
+        <span suppressHydrationWarning style={{ marginLeft: "auto", fontSize: "13px", color: "var(--text-secondary)", fontWeight: 500, alignSelf: "center" }}>
           {new Date(notice.publishDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
         </span>
       </div>
